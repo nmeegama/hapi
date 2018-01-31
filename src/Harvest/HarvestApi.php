@@ -66,6 +66,16 @@ use Harvest\Model\Invoice\Filter;
      */
     protected $_user;
 
+   /**
+    * @var string Access Token
+    */
+    protected  $_accessToken;
+
+   /**
+    * @var stinrg Harvest-Account-ID
+    */
+    protected  $_accountId;
+
     /**
      * @var string User Password
      */
@@ -90,6 +100,38 @@ use Harvest\Model\Invoice\Filter;
      * @var array Header Associated Array
      */
     protected $_headers;
+
+   /**
+    * set Harvest Access token
+    *
+    * <code>
+    * $api = new HarvestApi();
+    * $api->setAccessToken("access token");
+    * </code>
+    *
+    * @param  string $accessToken Access token
+    * @return void
+    */
+   public function setAccessToken($accessToken)
+   {
+     $this->_accessToken = $accessToken;
+   }
+
+   /**
+    * set Harvest-Account-ID
+    *
+    * <code>
+    * $api = new HarvestApi();
+    * $api->setAccessToken("harvest account id");
+    * </code>
+    *
+    * @param  string $accountId Harvest account id
+    * @return void
+    */
+   public function setAccountId($accountId)
+   {
+     $this->_accountId = $accountId;
+   }
 
     /**
      * set Harvest User Name
@@ -258,7 +300,7 @@ use Harvest\Model\Invoice\Filter;
      */
     public function getEntry($entry_id, $user_id = false)
     {
-        $url = "daily/show/" . $entry_id;
+        $url = "time_entries/" . $entry_id;
 
         if ($user_id) {
             $url .= "?of_user=" . $user_id;
@@ -316,7 +358,7 @@ use Harvest\Model\Invoice\Filter;
       */
     public function createEntry(DayEntry $entry, $other_user = true)
     {
-        $url = "daily/add";
+        $url = "time_entries";
 
         if ($other_user) {
             $url .= "?of_user=" . $entry->get("user-id");
@@ -349,7 +391,7 @@ use Harvest\Model\Invoice\Filter;
     public function startNewTimer(DayEntry $entry)
     {
         $entry->set("hours", " ");
-        $url = "daily/add";
+        $url = "time_entries";
 
         return $this->performPost($url, $entry->toXML(), false);
     }
@@ -436,7 +478,7 @@ use Harvest\Model\Invoice\Filter;
      */
     public function getClients($updated_since = null)
     {
-        $url = "clients" . $this->appendUpdatedSinceParam($updated_since);
+        $url = "clients";
 
         return $this->performGet($url, true);
     }
@@ -2551,7 +2593,7 @@ use Harvest\Model\Invoice\Filter;
         }
         if ("2" == substr($code, 0, 1)) {
             if ($multi === true) {
-                $data = $this->parseItems($data);
+                $data = $this->parseJSONItems($data);
             } elseif ($multi == "raw") {
                 //$data = $data;
             } else {
@@ -2571,11 +2613,16 @@ use Harvest\Model\Invoice\Filter;
     {
         $this->resetHeader();
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, "https://" . $this->_account . ".harvestapp.com/" . $url);
+        curl_setopt($ch, CURLOPT_URL, "https://api.harvestapp.com/v2/" . $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array('User-Agent: PHP Wrapper Library for Harvest API', 'Accept: application/xml', 'Content-Type: application/xml', 'Authorization: Basic (' . base64_encode($this->_user . ":" . $this->_password). ')'));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+            "User-Agent: PHP Wrapper Library for Harvest API",
+            "Authorization: Bearer " . $this->_accessToken,
+            "Harvest-Account-ID: "   . $this->_accountId
+          )
+        );
         curl_setopt($ch, CURLOPT_HEADERFUNCTION, array(&$this,'parseHeader'));
 
         return $ch;
@@ -2649,7 +2696,7 @@ use Harvest\Model\Invoice\Filter;
             if ($multi == "id" && isset($this->_headers["Location"])) {
                 $rData = $this->_headers["Location"];
             } elseif ($multi === true) {
-                $rData = $this->parseItems($rData);
+                $rData = $this->parseJSONItems($rData);
             } elseif ($multi == "raw") {
                 $rData = $data;
             } else {
@@ -2751,7 +2798,13 @@ use Harvest\Model\Invoice\Filter;
         $ch = $this->generateCurl($url);
         curl_setopt($ch, CURLOPT_POST, 1);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array('User-Agent: PHP Wrapper Library for Harvest API', 'Accept: application/xml', 'Content-Type: multipart/form-data', 'Authorization: Basic (' . base64_encode($this->_user . ":" . $this->_password). ')'));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+            "User-Agent: PHP Wrapper Library for Harvest API",
+            "Content-Type: multipart/form-data",
+            "Authorization: Bearer " . $this->_accessToken,
+            "Harvest-Account-ID: "   . $this->_accountId
+          )
+        );
 
         return $ch;
     }
@@ -2776,6 +2829,16 @@ use Harvest\Model\Invoice\Filter;
 
         return $items;
     }
+
+   /**
+    * parse JSON list
+    * @param  string $json JSON String
+    * @return array
+    */
+   protected function parseJSONItems($json, $assoc = TRUE)
+   {
+     return json_decode($json, $assoc);
+   }
 
     /**
      * parse XML item
