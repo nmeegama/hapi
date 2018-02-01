@@ -364,7 +364,7 @@ use Harvest\Model\Invoice\Filter;
             $url .= "?of_user=" . $entry->get("user-id");
         }
  
-        return $this->performPost($url, $entry->toXML(), false);
+        return $this->performPost($url, $entry->toArray(), false);
     }
 
      /**
@@ -2685,6 +2685,7 @@ use Harvest\Model\Invoice\Filter;
             $ch = $this->generatePostCurl($url, $data);
             $rData = curl_exec($ch);
             $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
             if ($this->_mode == HarvestApi::RETRY && $code == "503") {
                 $success = false;
                 sleep($this->_headers['Retry-After']);
@@ -2695,15 +2696,12 @@ use Harvest\Model\Invoice\Filter;
         if ("2" == substr($code, 0, 1)) {
             if ($multi == "id" && isset($this->_headers["Location"])) {
                 $rData = $this->_headers["Location"];
-            } elseif ($multi === true) {
-                $rData = $this->parseJSONItems($rData);
-            } elseif ($multi == "raw") {
+            }  elseif ($multi == "raw") {
                 $rData = $data;
             } else {
-                $rData = $this->parseItem($rData);
+                $rData = $this->parseJSONItems($rData);
             }
         }
-
         return new Result($code, $rData, $this->_headers);
     }
 
