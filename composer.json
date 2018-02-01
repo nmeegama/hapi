@@ -1,16 +1,15 @@
 {
-    "name": "gridonic/hapi",
+    "name": "nmeegama/hapi",
     "type": "library",
     "description": "PHP Wrapper Library for the Harvest API",
     "keywords": ["api", "harvest"],
-    "homepage": "http://github.com/gridonic/hapi",
+    "homepage": "https://github.com/nmeegama/hapi",
     "license": "GPL-3.0",
     "require": {
         "php": ">=5.3.3",
         "ext-curl": "*"
     },
     "require-dev": {
-        "phpunit/phpunit": "~4",
         "phpunit/phpunit": "^6"
     },
     "autoload": {
