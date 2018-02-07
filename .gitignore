@@ -1,4 +1,6 @@
 index.php
 vendor
 harvest_api_config.json
+harvest_api_config_user.json
 .idea
+composer.lock

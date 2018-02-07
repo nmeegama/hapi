@@ -60,15 +60,48 @@ class HarvestApiTest extends TestCase {
   public function testAddTimeEntry() {
     $entry = new DayEntry();
     $entry->set("notes", "Test Support");
-    $entry->set("hours", 2);
+    $entry->set("hours", 3);
     $entry->set("project_id", 16096418);
     $entry->set("task_id", 4220630);
-    $entry->set("spent_date", "2018-02-01");
+    $entry->set("spent_date", "2018-02-07");
     $config = file_exists(BASE_PATH . DIRECTORY_SEPARATOR . "harvest_api_config_user.json") ? json_decode(file_get_contents(BASE_PATH . DIRECTORY_SEPARATOR . "harvest_api_config_user.json")) : [];
     $api = new HarvestApi();
     $api->setAccessToken($config->access_token);
     $api->setAccountId($config->account_id);
     $result = $api->createEntry($entry, FALSE);
+    $rdata = $result->get('data');
+
+    $_SESSION["time_entry_id"] = $rdata["id"];
+    $this->assertTrue($result->isSuccess());
+  }
+
+  /**
+   * @group internet
+   */
+  public function testUpdateTimeEntry() {
+    $entry = new DayEntry();
+    $entry->set("id", $_SESSION["time_entry_id"]);
+    $entry->set("hours", 3.75);
+    $entry->set("notes", "Test Support v2");
+    $config = file_exists(BASE_PATH . DIRECTORY_SEPARATOR . "harvest_api_config_user.json") ? json_decode(file_get_contents(BASE_PATH . DIRECTORY_SEPARATOR . "harvest_api_config_user.json")) : [];
+    $api = new HarvestApi();
+    $api->setAccessToken($config->access_token);
+    $api->setAccountId($config->account_id);
+    $result = $api->updateEntry($entry);
+    $this->assertTrue($result->isSuccess());
+  }
+
+  /**
+   * @group internet
+   */
+  public function testDeleteTimeEntry() {
+    $entry = new DayEntry();
+    $entry->set("id", $_SESSION["time_entry_id"]);
+    $config = file_exists(BASE_PATH . DIRECTORY_SEPARATOR . "harvest_api_config_user.json") ? json_decode(file_get_contents(BASE_PATH . DIRECTORY_SEPARATOR . "harvest_api_config_user.json")) : [];
+    $api = new HarvestApi();
+    $api->setAccessToken($config->access_token);
+    $api->setAccountId($config->account_id);
+    $result = $api->deleteEntry($entry);
     $this->assertTrue($result->isSuccess());
   }
 }
