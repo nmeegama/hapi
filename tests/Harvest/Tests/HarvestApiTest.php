@@ -1,5 +1,4 @@
 <?php
-
 namespace Harvest\Tests;
 
 use Harvest\HarvestApi;
@@ -83,11 +82,13 @@ class HarvestApiTest extends TestCase {
     $entry->set("id", $_SESSION["time_entry_id"]);
     $entry->set("hours", 3.75);
     $entry->set("notes", "Test Support v2");
+    $entry->set("external_reference", array("id" => 123456, "group_id" => 78910, "permalink" => "https://host.fake"));
     $config = file_exists(BASE_PATH . DIRECTORY_SEPARATOR . "harvest_api_config_user.json") ? json_decode(file_get_contents(BASE_PATH . DIRECTORY_SEPARATOR . "harvest_api_config_user.json")) : [];
     $api = new HarvestApi();
     $api->setAccessToken($config->access_token);
     $api->setAccountId($config->account_id);
     $result = $api->updateEntry($entry);
+
     $this->assertTrue($result->isSuccess());
   }
 

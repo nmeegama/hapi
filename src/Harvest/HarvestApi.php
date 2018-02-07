@@ -2617,18 +2617,24 @@ class HarvestApi {
    *
    * @return resource cURL Handler
    */
-  protected function generateCurl($url) {
+  protected function generateCurl($url, $post_json = FALSE) {
     $this->resetHeader();
+    $add_header = array();
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, "https://api.harvestapp.com/v2/" . $url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    if($post_json) {
+      $add_header = [
+        'Content-Type: application/json'
+      ];
+    }
+    curl_setopt($ch, CURLOPT_HTTPHEADER, array_merge([
         "User-Agent: PHP Wrapper Library for Harvest API",
         "Authorization: Bearer " . $this->_accessToken,
         "Harvest-Account-ID: " . $this->_accountId,
-      ]
+      ], $add_header)
     );
     curl_setopt($ch, CURLOPT_HEADERFUNCTION, [&$this, 'parseHeader']);
 
@@ -2785,9 +2791,10 @@ class HarvestApi {
    * @return resource cURL Handler
    */
   protected function generatePatchCurl($url, $data) {
-    $ch = $this->generateCurl($url);
+    $data_string = json_encode($data);
+    $ch = $this->generateCurl($url, TRUE);
     curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PATCH');
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
 
     return $ch;
   }
