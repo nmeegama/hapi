@@ -775,8 +775,8 @@ class HarvestApi {
    *
    * @return Result
    */
-  public function getProjects($updated_since = NULL) {
-    $url = "projects" . $this->appendUpdatedSinceParam($updated_since);
+  public function getProjects($params) {
+    $url = "projects" .$this->appendParams($params);
 
     return $this->performGet($url, TRUE);
   }
@@ -1070,7 +1070,7 @@ class HarvestApi {
    * @return Result
    */
   public function getUsers() {
-    $url = "people";
+    $url = "users";
 
     return $this->performGet($url, TRUE);
   }
@@ -2551,25 +2551,32 @@ class HarvestApi {
   /*--------------------------------------------------------------*/
 
   /**
-   * generate the update_since query params
+   * generate the query params
    *
    * @param \DateTime $updated_since
    *
    * @return string
    * @internal param mixed $update_since DateTime
    */
-  public function appendUpdatedSinceParam($updated_since = NULL) {
-    if (is_null($updated_since)) {
+  public function appendParams($params = array()) {
+    if (empty($params)) {
       return "";
     }
-    elseif ($updated_since instanceOf \DateTime) {
-      return '?updated_since=' . urlencode($updated_since->format("Y-m-d G:i"));
-    }
     else {
-      return '?updated_since=' . urlencode($updated_since);
+      foreach ($params as $key => $val) {
+        if($key == 'updated_since'){
+          if ($val instanceOf \DateTime) {
+            $params['updated_since'] = urlencode($val->format("Y-m-d G:i"));
+          }
+          else {
+            $params['updated_since'] = urlencode($val);
+          }
+        }
+      }
+
+      return "?". http_build_query($params);
     }
   }
-
   /**
    * perform http get command
    *
@@ -2775,9 +2782,10 @@ class HarvestApi {
    * @return resource cURL Handler
    */
   protected function generatePostCurl($url, $data) {
-    $ch = $this->generateCurl($url);
+    $ch = $this->generateCurl($url, TRUE);
     curl_setopt($ch, CURLOPT_POST, 1);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+    $data_string = json_encode($data);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);
 
     return $ch;
   }
